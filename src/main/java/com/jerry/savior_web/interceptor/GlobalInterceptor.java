@@ -20,8 +20,8 @@ import java.io.PrintWriter;
 @Component
 @Getter
 public class GlobalInterceptor implements HandlerInterceptor {
-    private final String GATEWAY_ACCESS_HEADER_NAME = "gateway-access";
-    private final String[] GATEWAY_ACCESS_HEADER_VALUE = new String[]{"true"};
+    public static final String INTERNAL_ACCESS_HEADER_NAME = "internal-access";
+    public static final String[] INTERNAL_ACCESS_HEADER_VALUE = new String[]{"true"};
     private final ObjectMapperHelper objectMapperHelper;
 
     public GlobalInterceptor(ObjectMapperHelper objectMapperHelper) {
@@ -32,9 +32,9 @@ public class GlobalInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         log.info("Gateway Access Checking...");
-        String header = request.getHeader(GATEWAY_ACCESS_HEADER_NAME);
+        String header = request.getHeader(INTERNAL_ACCESS_HEADER_NAME);
         // 如果请求头没有 gateway access参数或者参数值不对，不允许访问服务
-        if (StringUtils.isBlank(header) || !GATEWAY_ACCESS_HEADER_VALUE[0].equals(header)) {
+        if (StringUtils.isBlank(header) || !INTERNAL_ACCESS_HEADER_VALUE[0].equals(header)) {
             response.setContentType("application/json; charset=UTF-8");
             PrintWriter writer = response.getWriter();
             // 构建forbidden对象

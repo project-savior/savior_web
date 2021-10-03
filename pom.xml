@@ -56,11 +56,15 @@
             <scope>provided</scope>
         </dependency>
         <!--savior common-->
-        <!--savior common-->
         <dependency>
             <groupId>com.jerry</groupId>
             <artifactId>savior_common</artifactId>
             <version>${savior-common.version}</version>
+        </dependency>
+        <!--open feign-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
     </dependencies>
     <distributionManagement>

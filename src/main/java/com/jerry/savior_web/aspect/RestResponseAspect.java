@@ -2,6 +2,7 @@ package com.jerry.savior_web.aspect;
 
 
 import com.jerry.savior_common.constants.StandardResponse;
+import com.jerry.savior_common.error.BusinessException;
 import com.jerry.savior_common.response.CommonResponse;
 import com.jerry.savior_common.util.ObjectMapperHelper;
 import lombok.SneakyThrows;
@@ -70,12 +71,24 @@ public class RestResponseAspect implements ResponseBodyAdvice<Object> {
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public CommonResponse<Void> handleException(Exception exception) {
-        log.error("异常，", exception);
+        log.error("未知异常，", exception);
         //TODO push to mq
         return CommonResponse.build(
                 StandardResponse.ERROR.getCode(),
                 null,
                 StandardResponse.ERROR.getMessage()
+        );
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public CommonResponse<Void> handleBusinessException(BusinessException exception) {
+        log.error("业务异常，", exception);
+        return CommonResponse.build(
+                exception.getCode(),
+                null,
+                exception.getMessage()
         );
     }
 }
