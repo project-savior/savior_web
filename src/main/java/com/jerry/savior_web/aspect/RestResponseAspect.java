@@ -13,10 +13,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.lang.NonNull;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import java.io.OutputStream;
@@ -26,32 +28,44 @@ import java.nio.charset.StandardCharsets;
  * @author 22454
  */
 @Slf4j
-@ControllerAdvice
+@RestControllerAdvice
 public class RestResponseAspect implements ResponseBodyAdvice<Object> {
 
     private final ObjectMapperHelper objectMapperHelper;
+    private final String[] SWAGGER_RESOURCE={
+            "/swagger-resources",
+            "/v2/api-docs"
+    };
 
     public RestResponseAspect(ObjectMapperHelper objectMapperHelper) {
         this.objectMapperHelper = objectMapperHelper;
     }
 
     @Override
-    public boolean supports(MethodParameter methodParameter, Class<? extends HttpMessageConverter<?>> aClass) {
+    public boolean supports(@NonNull MethodParameter methodParameter,
+                            @NonNull Class<? extends HttpMessageConverter<?>> aClass) {
         return true;
     }
 
     @SneakyThrows
     @Override
     public Object beforeBodyWrite(Object body,
-                                  MethodParameter parameter,
-                                  MediaType mediaType,
-                                  Class<? extends HttpMessageConverter<?>> converterClass,
-                                  ServerHttpRequest request,
-                                  ServerHttpResponse response) {
+                                  @NonNull MethodParameter parameter,
+                                  @NonNull MediaType mediaType,
+                                  @NonNull Class<? extends HttpMessageConverter<?>> converterClass,
+                                  @NonNull ServerHttpRequest request,
+                                  @NonNull ServerHttpResponse response) {
+        String path = request.getURI().getPath();
+        for (String resource : SWAGGER_RESOURCE) {
+            if (resource.equals(path)){
+                return body;
+            }
+        }
         // 假如已经是统一返回类型（例如：GlobalExceptionHandler将出现该情况），直接返回
         if (body instanceof CommonResponse) {
             return body;
         }
+
         // 重新设置Content-Type
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
         // 构建CommonResponse
@@ -67,28 +81,8 @@ public class RestResponseAspect implements ResponseBodyAdvice<Object> {
         return null;
     }
 
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
-    public CommonResponse<Void> handleException(Exception exception) {
-        log.error("未知异常，", exception);
-        //TODO push to mq
-        return CommonResponse.build(
-                StandardResponse.ERROR.getCode(),
-                null,
-                StandardResponse.ERROR.getMessage()
-        );
-    }
 
-    @ExceptionHandler(BusinessException.class)
-    @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
-    public CommonResponse<Void> handleBusinessException(BusinessException exception) {
-        log.error("业务异常，", exception);
-        return CommonResponse.build(
-                exception.getCode(),
-                null,
-                exception.getMessage()
-        );
-    }
+
+
+
 }
